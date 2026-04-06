@@ -1,11 +1,11 @@
 // =====================================================
 // Chapter 1 示例：Hello TypeScript
 // 运行方式：
-//   Node.js (v22.18+): node --experimental-strip-types hello.ts
-//   Node.js (v24+):    node hello.ts
-//   Node.js (tsx):     npx tsx hello.ts
-//   Node.js (tsc):     npx tsc --noEmit hello.ts | npx tsc hello.ts
-//   Bun:               bun hello.ts
+//   npx tsx hello.ts                          (tsx)
+//   bun hello.ts                              (Bun)
+//   node --experimental-strip-types hello.ts   (Node v22.18+)
+//   node hello.ts                             (Node v24+)
+//   npx tsc --noEmit hello.ts                 (仅类型检查，不生成文件)
 // =====================================================
 
 // const = 不可重绑定（类似 Rust 的默认不可变绑定）
@@ -57,13 +57,8 @@ function greet(name: string): string {
 
 console.log(`\n--- 练习 ---`);
 console.log(greet("World"));
-// greet(42);  // 取消注释会看到编译错误：Argument of type 'number' is not assignable to parameter of type 'string'
+// greet(42);  // 取消注释 → TS 编译错误（但 bun/tsx 运行时不报错，因为它们不做类型检查）
 
-// 使文件成为一个 ES 模块。
-// 没有这行的话，文件被视为脚本，所有顶层变量会进入全局作用域。
-// 加了 export {} 后，每个文件有自己独立的作用域。
-// 在文件末尾的 `export {};` 并不是真正导出东西，
-// 而是告诉 TS："这个文件是模块，不是脚本"，
-// 让顶层变量不泄漏到全局作用域。
-// 一旦文件里有了真正的 import / export，这行就可以删掉了。
+// export {} 使文件成为 ES 模块，避免顶层变量泄漏到全局作用域
+// 详见 Chapter 7
 export {};

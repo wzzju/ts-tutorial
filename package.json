@@ -1,0 +1,25 @@
+{
+    "name": "typescript-tutorial",
+    "version": "1.0.0",
+    "description": "TypeScript 快速入门教程 - 示例代码",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "ch01": "tsx examples/ch01/hello.ts",
+        "ch02": "tsx examples/ch02/types.ts",
+        "ch03": "tsx examples/ch03/functions.ts",
+        "ch04": "tsx examples/ch04/classes.ts",
+        "ch05": "tsx examples/ch05/advanced-types.ts",
+        "ch06": "tsx examples/ch06/async.ts",
+        "ch07": "tsx examples/ch07/modules-demo.ts",
+        "ch08": "tsx examples/ch08/task-store.ts",
+        "ch09": "tsx examples/ch09/testing-demo.ts",
+        "ch10": "tsx examples/ch10/error-patterns.ts",
+        "typecheck": "tsc --noEmit"
+    },
+    "devDependencies": {
+        "@types/node": "^25.5.2",
+        "tsx": "^4.0.0",
+        "typescript": "^5.4.0"
+    }
+}

@@ -4,6 +4,7 @@
 //   Node.js (v22.18+): node --experimental-strip-types hello.ts
 //   Node.js (v24+):    node hello.ts
 //   Node.js (tsx):     npx tsx hello.ts
+//   Node.js (tsc):     npx tsc --noEmit hello.ts | npx tsc hello.ts
 //   Bun:               bun hello.ts
 // =====================================================
 
@@ -58,4 +59,11 @@ console.log(`\n--- 练习 ---`);
 console.log(greet("World"));
 // greet(42);  // 取消注释会看到编译错误：Argument of type 'number' is not assignable to parameter of type 'string'
 
+// 使文件成为一个 ES 模块。
+// 没有这行的话，文件被视为脚本，所有顶层变量会进入全局作用域。
+// 加了 export {} 后，每个文件有自己独立的作用域。
+// 在文件末尾的 `export {};` 并不是真正导出东西，
+// 而是告诉 TS："这个文件是模块，不是脚本"，
+// 让顶层变量不泄漏到全局作用域。
+// 一旦文件里有了真正的 import / export，这行就可以删掉了。
 export {};

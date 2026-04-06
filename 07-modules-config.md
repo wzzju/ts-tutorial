@@ -77,6 +77,36 @@ export * from "./utils";  // 导出 utils 的所有命名导出
 export type { MathResult } from "./math";
 ```
 
+### 导入路径的扩展名
+
+导入路径是否需要写文件后缀（`.ts` / `.js`），取决于运行环境和 `tsconfig.json` 配置：
+
+```typescript
+import { add } from "./math";      // 无后缀
+import { add } from "./math.js";   // .js 后缀
+import { add } from "./math.ts";   // .ts 后缀（源文件扩展名）
+```
+
+```
+               无后缀     .js      .ts
+tsc + bundler   ✓         ✓        ✓ (需 allowImportingTsExtensions)
+tsx / esbuild   ✓         ✓        ✓
+Bun             ✓         ✓        ✓
+Node.js ESM     ✗         ✓        ✓ (v22.6+)
+```
+
+**为什么会有这种差异？**
+- ESM 规范要求**必须带扩展名**，Node.js 严格遵循此规范
+- Bundler 工具（tsx、esbuild、Vite、Webpack）自己实现了模块解析，允许省略后缀
+- TypeScript 历史上默认省略后缀，但写 `.js` 是因为 import 路径指向**编译后的产物**
+
+**实际项目中的惯例：**
+- 前端项目（Vite/Webpack）：通常**省略后缀** `"./math"`
+- Node.js ESM 后端项目：写 `"./math.js"`（即使源文件是 `.ts`）
+- Bun 项目：写 `"./math.ts"` 最直观，也支持省略
+
+> 建议：团队内保持一致即可。本教程示例使用 `.ts` 后缀，因为源文件就是 `.ts`，意图最明确，且 tsx / Bun / Node v22.6+ 均支持。
+
 > **与 C/C++ 头文件的关键差异**：
 > - C/C++: `#include` 是文本替换，同一个头文件可能被多次包含（需要 include guard）
 > - TS: `import` 是模块引用，每个模块只会执行一次（天然去重）

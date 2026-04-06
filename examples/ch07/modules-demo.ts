@@ -1,151 +1,122 @@
 // =====================================================
-// Chapter 7 示例：模块系统演示
-// 本示例展示 import/export 用法，所有逻辑在单文件中模拟
+// Chapter 7 示例：模块系统演示（主入口）
+// 本文件通过真实的 import/export 演示模块机制
+//
+// 文件结构：
+//   ch07/
+//   ├── types.ts        — 类型定义（export interface/type）
+//   ├── math.ts         — 命名导出 + 默认导出
+//   ├── store.ts        — 导入类型，导出类
+//   ├── utils.ts        — 工具函数
+//   ├── index.ts        — 桶文件（重导出）
+//   └── modules-demo.ts — 主入口（本文件）
+//
 // 运行方式：
-//   Node.js (v22.18+): node --experimental-strip-types modules-demo.ts
-//   Node.js (v24+):    node modules-demo.ts
-//   Node.js (tsx):     npx tsx modules-demo.ts
-//   Bun:               bun modules-demo.ts
+//   Node.js (v22.18+): node --experimental-strip-types examples/ch07/modules-demo.ts
+//   Node.js (v24+):    node examples/ch07/modules-demo.ts
+//   Node.js (tsx):     npx tsx examples/ch07/modules-demo.ts
+//   Bun:               bun examples/ch07/modules-demo.ts
 // =====================================================
 
 console.log("=== Chapter 7: 模块系统演示 ===\n");
 
-// ——— 模拟模块导出/导入的概念 ———
-// 在实际项目中，这些会分散在不同文件中
-// 这里在单文件中演示语法和概念
+// ——— 1. 命名导入（Named Import）———
+// 从 math.ts 导入指定的函数和常量
+import { add, multiply, PI } from "./math.ts";
 
-// ——— 模拟 types.ts ———
-interface Todo {
-    id: string;
-    title: string;
-    completed: boolean;
-    createdAt: Date;
-}
+console.log("--- 1. 命名导入 ---");
+console.log(`add(2, 3) = ${add(2, 3)}`);
+console.log(`multiply(4, 5) = ${multiply(4, 5)}`);
+console.log(`PI = ${PI}`);
 
-type CreateTodoInput = Omit<Todo, "id" | "createdAt">;
-type UpdateTodoInput = Partial<Omit<Todo, "id" | "createdAt">>;
+// ——— 2. 默认导入（Default Import）———
+// 默认导出可以用任意名字导入
+import Calculator from "./math.ts";
 
-// ——— 模拟 store.ts ———
-class TodoStore {
-    private todos: Map<string, Todo> = new Map();
-    private nextId = 1;
+console.log("\n--- 2. 默认导入 ---");
+const calc = new Calculator();
+calc.run("add", 10, 20);
+calc.run("multiply", 3, 7);
+console.log("Calculator history:", calc.getHistory());
 
-    create(input: CreateTodoInput): Todo {
-        const todo: Todo = {
-            ...input,
-            id: String(this.nextId++),
-            createdAt: new Date(),
-        };
-        this.todos.set(todo.id, todo);
-        return todo;
-    }
+// ——— 3. 重命名导入（Import Renaming）———
+// 类似 Python 的 from math import add as math_add
+import { add as mathAdd } from "./math.ts";
 
-    update(id: string, input: UpdateTodoInput): Todo | null {
-        const existing = this.todos.get(id);
-        if (!existing) return null;
-        const updated = { ...existing, ...input };
-        this.todos.set(id, updated);
-        return updated;
-    }
+console.log("\n--- 3. 重命名导入 ---");
+console.log(`mathAdd(100, 200) = ${mathAdd(100, 200)}`);
 
-    delete(id: string): boolean {
-        return this.todos.delete(id);
-    }
+// ——— 4. 命名空间导入（Namespace Import）———
+// 类似 Python 的 import module
+// 类似 Rust 的 use module::*（但更显式）
+import * as MathUtils from "./math.ts";
 
-    getById(id: string): Todo | undefined {
-        return this.todos.get(id);
-    }
+console.log("\n--- 4. 命名空间导入 ---");
+console.log(`MathUtils.add(7, 8) = ${MathUtils.add(7, 8)}`);
+console.log(`MathUtils.PI = ${MathUtils.PI}`);
 
-    getAll(): Todo[] {
-        return Array.from(this.todos.values());
-    }
+// ——— 5. 类型导入（Type-Only Import）———
+// import type 只导入类型，编译后完全消失
+// 类比 Rust: use crate::types::Todo;（Rust 不区分值/类型导入）
+import type { Todo, ApiResponse } from "./types.ts";
 
-    filter(predicate: (todo: Todo) => boolean): Todo[] {
-        return this.getAll().filter(predicate);
-    }
-}
-
-// ——— 演示 tsconfig.json 关键配置 ———
-console.log("--- tsconfig.json 关键配置说明 ---");
-const tsconfigExample = {
-    compilerOptions: {
-        target: "ES2022",                     // 编译目标
-        module: "ESNext",                      // 模块格式
-        moduleResolution: "bundler",           // 模块解析策略
-        strict: true,                          // 开启所有严格检查
-        noUncheckedIndexedAccess: true,        // 索引访问返回 T | undefined
-        esModuleInterop: true,                 // CommonJS 互操作
-        declaration: true,                     // 生成 .d.ts
-        sourceMap: true,                       // 生成 source map
-        outDir: "./dist",
-        rootDir: "./src",
-    },
-    include: ["src/**/*"],
-    exclude: ["node_modules", "dist"],
+console.log("\n--- 5. 类型导入 ---");
+// Todo 和 ApiResponse 只能用于类型标注，不能当值使用
+const response: ApiResponse<Todo[]> = {
+    data: [],
+    status: 200,
+    message: "ok",
 };
-console.log(JSON.stringify(tsconfigExample, null, 2));
+console.log(`ApiResponse status: ${response.status}, message: ${response.message}`);
 
-// ——— 演示 package.json 脚本 ———
-console.log("\n--- package.json scripts 示例 ---");
-const packageScripts = {
-    dev: "tsx watch src/index.ts",
-    "dev:node": "node --watch --experimental-strip-types src/index.ts",
-    "dev:bun": "bun --watch src/index.ts",
-    build: "tsc",
-    start: "node dist/index.js",
-    typecheck: "tsc --noEmit",
-    test: "vitest",
-};
-console.log(JSON.stringify(packageScripts, null, 2));
+// ——— 6. 从桶文件（Barrel File）导入 ———
+// index.ts 聚合了所有模块的导出，一行导入多个模块的内容
+import { TodoStore, formatTodo, formatDate } from "./index.ts";
 
-// ——— 实际使用 TodoStore ———
-console.log("\n--- TodoStore 使用演示 ---");
-
+console.log("\n--- 6. 通过 index.ts 桶文件导入 ---");
 const store = new TodoStore();
 
-const todo1 = store.create({ title: "Learn TypeScript", completed: false });
+const todo1 = store.create({ title: "Learn TypeScript modules", completed: false });
 const todo2 = store.create({ title: "Build a project", completed: false });
 const todo3 = store.create({ title: "Write tests", completed: true });
 
 console.log("All todos:");
-store.getAll().forEach(t => {
-    console.log(`  [${t.completed ? "✓" : " "}] #${t.id}: ${t.title}`);
-});
+store.getAll().forEach(t => console.log(`  ${formatTodo(t)}`));
 
 store.update(todo1.id, { completed: true });
 console.log("\nAfter completing todo1:");
-store.getAll().forEach(t => {
-    console.log(`  [${t.completed ? "✓" : " "}] #${t.id}: ${t.title}`);
-});
+store.getAll().forEach(t => console.log(`  ${formatTodo(t)}`));
 
 const incomplete = store.filter(t => !t.completed);
 console.log(`\nIncomplete: ${incomplete.length} items`);
 
 store.delete(todo3.id);
-console.log(`After delete: ${store.getAll().length} items`);
+console.log(`After delete: ${store.getAll().length} items remaining`);
 
-// ——— .d.ts 声明文件概念 ———
-console.log("\n--- .d.ts 声明文件概念 ---");
+console.log(`\nToday: ${formatDate(new Date())}`);
+
+// ——— 7. 模块只执行一次 ———
+// 与 C/C++ 的 #include 不同，import 同一模块多次不会重复执行
+// 下面两行导入同一模块，math.ts 的顶层代码只运行一次
+console.log("\n--- 7. 模块只执行一次 ---");
+console.log("多次 import 同一模块，模块代码只执行一次（天然去重，无需 include guard）");
+
+// ——— 8. .d.ts 声明文件概念 ———
+console.log("\n--- 8. .d.ts 声明文件（类似 C/C++ 头文件）---");
 console.log(`
-// 声明文件示例（为纯 JS 库提供类型）:
-// legacy-lib.d.ts
-declare module "legacy-lib" {
-    export function parse(input: string): object;
-    export function stringify(obj: object): string;
-}
+.d.ts 文件只包含类型信息，没有实现：
 
-// 全局变量声明:
-// declare const __VERSION__: string;
-// declare const __DEBUG__: boolean;
+  // 为纯 JS 库提供类型
+  declare module "legacy-lib" {
+      export function parse(input: string): object;
+  }
 
-// 扩展已有类型:
-// declare global {
-//     interface Window {
-//         myApp: { version: string };
-//     }
-// }
+  // 声明全局变量
+  declare const __VERSION__: string;
+
+大多数第三方库的类型：
+  npm install lodash           # JS 库本身
+  npm install -D @types/lodash # 类型定义（devDependency）
 `);
 
 console.log("=== Chapter 7 完成 ===");
-
-export {};

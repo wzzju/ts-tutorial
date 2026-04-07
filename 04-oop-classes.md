@@ -214,7 +214,106 @@ interface Config {
 // 这个特性主要用于扩展第三方库的类型定义
 ```
 
-## 4.6 装饰器（Decorators）
+## 4.6 自动访问器关键字 accessor（TS 4.9+）
+
+TypeScript 4.9 引入了 `accessor` 关键字，自动生成 getter/setter，简化响应式属性的定义。
+
+```typescript
+class ReactiveUser {
+    // accessor 自动生成私有存储 + getter + setter
+    accessor name: string;
+    accessor age: number;
+
+    constructor(name: string, age: number) {
+        this.name = name;
+        this.age = age;
+    }
+}
+
+// 等价于手动写：
+// class ReactiveUser {
+//     #name: string;
+//     get name() { return this.#name; }
+//     set name(v: string) { this.#name = v; }
+//     ...
+// }
+
+const user = new ReactiveUser("Alice", 30);
+user.name = "Bob";  // 调用自动生成的 setter
+console.log(user.name);  // 调用自动生成的 getter
+```
+
+> **实用场景**：`accessor` 主要用于装饰器生态（如 MobX、Lit 等框架），
+> 装饰器可以拦截 accessor 的 get/set 来实现响应式数据、观察者模式等。
+
+## 4.7 资源管理：using 声明（TS 5.2+）
+
+TypeScript 5.2 引入了 `using` 关键字（TC39 Explicit Resource Management 提案），
+类似 C++ 的 RAII、Rust 的 `Drop` trait、Python 的 `with` 语句。
+
+```typescript
+// ——— 定义可释放资源 ———
+class FileHandle {
+    constructor(public path: string) {
+        console.log(`Opening ${path}`);
+    }
+
+    read(): string {
+        return `content of ${this.path}`;
+    }
+
+    // Symbol.dispose 定义同步清理逻辑
+    [Symbol.dispose](): void {
+        console.log(`Closing ${this.path}`);
+    }
+}
+
+// ——— 使用 using 自动释放资源 ———
+function processFile() {
+    using file = new FileHandle("/tmp/data.txt");
+    const content = file.read();
+    console.log(content);
+    // 作用域结束时自动调用 file[Symbol.dispose]()
+    // 类似 C++ 的析构函数、Rust 的 Drop
+}
+
+// ——— 异步版本：await using ———
+class DatabaseConnection {
+    constructor(public url: string) {
+        console.log(`Connecting to ${url}`);
+    }
+
+    async query(sql: string): Promise<unknown[]> {
+        return [{ id: 1 }];
+    }
+
+    // Symbol.asyncDispose 定义异步清理逻辑
+    async [Symbol.asyncDispose](): Promise<void> {
+        console.log(`Disconnecting from ${this.url}`);
+    }
+}
+
+async function queryDatabase() {
+    await using db = new DatabaseConnection("postgres://localhost");
+    const results = await db.query("SELECT * FROM users");
+    console.log(results);
+    // 作用域结束时自动 await db[Symbol.asyncDispose]()
+}
+```
+
+> **跨语言对比**：
+> | 语言 | 资源管理机制 |
+> |------|----------------|
+> | C++ | RAII（析构函数） |
+> | Rust | `Drop` trait（离开作用域时自动调用） |
+> | Python | `with` 语句 + `__enter__`/`__exit__` |
+> | C# | `using` 语句 + `IDisposable` |
+> | TypeScript | `using` + `Symbol.dispose` / `await using` + `Symbol.asyncDispose` |
+>
+> **注意**：`using` 需要运行时支持 `Symbol.dispose`。
+> 截至 2025 年，Node.js v22+ 和现代浏览器已支持，但旧环境可能需要 polyfill。
+
+## 4.8 装饰器（Decorators）
 
 TypeScript 5.0 起正式支持 **TC39 Stage 3 标准装饰器**，**不需要** `experimentalDecorators` 标志。
 类似 Python 的 `@decorator`、Rust 的过程宏。
@@ -283,7 +382,7 @@ class Greeter {
 > - `node --experimental-strip-types`：**不支持**装饰器（装饰器不是可擦除语法，需要代码生成）
 > - 装饰器在实际项目中主要用于框架（Angular、NestJS 等）。了解其原理即可。
 
-## 4.7 `this` 的陷阱
+## 4.9 `this` 的陷阱
 
 这是从 C++/Rust 转来最需要注意的点——JS/TS 的 `this` 不像 C++ 的 `this` 指针那样总是指向当前对象。
 
@@ -320,19 +419,19 @@ class Timer {
 > JS/TS 的 `this` 在**运行时**由调用方式决定，这是最常见的 bug 来源之一。
 > 记住：**箭头函数没有自己的 this，它捕获定义时的 this**。
 
-## 4.8 实用模式对照
+## 4.10 实用模式对照
 
 | 模式 | C++ | Rust | TypeScript |
 |------|-----|------|------------|
 | 构造函数 | `Class()` | `impl Class { fn new() }` | `constructor()` |
-| 析构函数 | `~Class()` | `impl Drop` | 无（GC 自动回收） |
+| 析构函数 | `~Class()` | `impl Drop` | 无（GC 自动回收）/ `using` |
 | 私有成员 | `private:` | 模块级私有 | `private` / `#field` |
 | 接口/抽象 | 纯虚函数 | `trait` | `interface` / `abstract class` |
 | 多态 | 虚函数+vtable | trait object (`dyn Trait`) | 天然支持（结构化类型） |
 | 运算符重载 | `operator+` | `impl Add` | 不支持 |
 | 泛型类 | `template<T> class` | `struct<T>` | `class<T>` |
 
-## 4.9 练习
+## 4.11 练习
 
 ```typescript
 // 练习1：实现一个泛型 Stack<T> 类

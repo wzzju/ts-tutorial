@@ -126,6 +126,47 @@ const directions = ["up", "down", "left", "right"] as const;
 type Direction = typeof directions[number];
 console.log(`directions = [${directions.join(", ")}]`);
 
+// ——— 3.6 const 类型参数（TS 5.0+）———
+console.log("\n--- const 类型参数 ---");
+
+// 普通泛型：T 被推断为宽泛类型
+function createRoute<T extends string>(path: T) {
+    return { path };
+}
+const route1 = createRoute("/users");
+console.log(`普通泛型: path = "${route1.path}" (类型被拓宽为 string)`);
+
+// const 类型参数：T 被推断为字面量类型
+function createRouteConst<const T extends string>(path: T) {
+    return { path };
+}
+const route2 = createRouteConst("/users");
+console.log(`const 泛型: path = "${route2.path}" (类型保持为 "/users" 字面量)`);
+
+// const 类型参数用于数组
+function defineRoutes<const T extends readonly string[]>(routes: T): T {
+    return routes;
+}
+const routes = defineRoutes(["/home", "/about", "/contact"]);
+console.log(`const routes = [${routes.join(", ")}]`);
+
+// ——— 3.7 NoInfer<T>（TS 5.4+）———
+console.log("\n--- NoInfer<T> ---");
+
+function createFSM<S extends string>(config: {
+    initial: NoInfer<S>;
+    states: S[];
+}) {
+    return config;
+}
+
+const fsm = createFSM({
+    initial: "idle",
+    states: ["idle", "loading", "done"],
+});
+console.log(`FSM initial: "${fsm.initial}", states: [${fsm.states.join(", ")}]`);
+// 如果 initial 写了不在 states 中的值，TS 会报错
+
 // ——— 3.6 类型守卫 ———
 console.log("\n--- 类型守卫 ---");
 

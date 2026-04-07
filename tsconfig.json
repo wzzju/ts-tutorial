@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "target": "ES2022",
+        "target": "ES2023",
         "module": "ESNext",
         "moduleResolution": "bundler",
         "allowImportingTsExtensions": true,
@@ -13,7 +13,7 @@
         "declaration": false,
         "verbatimModuleSyntax": true,
         "sourceMap": true,
-        "lib": ["ES2022"],
+        "lib": ["ES2023", "ESNext.Disposable"],
         "types": ["node"]
     },
     "include": ["examples/**/*"],

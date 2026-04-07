@@ -55,7 +55,16 @@ bun examples/ch02/types.ts
 # ... 以此类推
 ```
 
-### 方式四：npm scripts
+### 方式四：Deno
+
+```bash
+# 安装 Deno: curl -fsSL https://deno.land/install.sh | sh
+deno run examples/ch01/hello.ts
+deno run examples/ch02/types.ts
+# ... 以此类推
+```
+
+### 方式五：npm scripts
 
 ```bash
 npm run ch01    # 运行 Chapter 1 示例
@@ -71,18 +80,18 @@ npm run typecheck    # 等价于 tsc --noEmit
 
 ## 运行时兼容性
 
-| 示例 | tsx | bun | node (v24+) | node --strip-types (v22.18+) |
-|------|-----|-----|-------------|------------------------------|
-| ch01 | ✓ | ✓ | ✓ | ✓ |
-| ch02 | ✓ | ✓ | ✓* | ✓* |
-| ch03 | ✓ | ✓ | ✓ | ✓ |
-| ch04 | ✓ | ✓ | ✗ | ✗ |
-| ch05 | ✓ | ✓ | ✓ | ✓ |
-| ch06 | ✓ | ✓ | ✓ | ✓ |
-| ch07 | ✓ | ✓ | ✓ | ✓ |
-| ch08 | ✓ | ✓ | ✓ | ✓ |
-| ch09 | ✓ | ✓ | ✓ | ✓ |
-| ch10 | ✓ | ✓ | ✓ | ✓ |
+| 示例 | tsx | bun | deno | node (v24+) | node --strip-types (v22.18+) |
+|------|-----|-----|------|-------------|------------------------------|
+| ch01 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| ch02 | ✓ | ✓ | ✓ | ✓* | ✓* |
+| ch03 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| ch04 | ✓ | ✓ | ✓ | ✗ | ✗ |
+| ch05 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| ch06 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| ch07 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| ch08 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| ch09 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| ch10 | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 \* ch02 含 `enum`，Node.js 原生类型剥离不支持 enum 语法，需用 tsx 或 bun。
 

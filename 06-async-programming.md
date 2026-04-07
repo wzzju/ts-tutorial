@@ -288,7 +288,64 @@ async def process_all_pages():
         print(f"Got {len(page)} items")
 ```
 
-## 6.8 实用模式
+## 6.8 资源管理：await using（TS 5.2+）
+
+`await using` 是异步资源管理的最佳实践，类似 Python 的 `async with`。
+
+```typescript
+// ——— 异步可释放资源 ———
+class AsyncConnection {
+    private constructor(public url: string) {}
+
+    static async create(url: string): Promise<AsyncConnection> {
+        console.log(`Connecting to ${url}...`);
+        await new Promise(r => setTimeout(r, 100));
+        return new AsyncConnection(url);
+    }
+
+    async query(sql: string): Promise<unknown[]> {
+        return [{ id: 1, name: "Alice" }];
+    }
+
+    async [Symbol.asyncDispose](): Promise<void> {
+        console.log(`Disconnecting from ${this.url}`);
+        await new Promise(r => setTimeout(r, 50));
+    }
+}
+
+// ——— 使用 await using ———
+async function fetchUsers() {
+    await using conn = await AsyncConnection.create("postgres://localhost");
+    const users = await conn.query("SELECT * FROM users");
+    console.log(users);
+    // 作用域结束时自动 await conn[Symbol.asyncDispose]()
+    // 即使抛出异常也会执行清理（类似 try/finally）
+}
+```
+
+### 跨语言对比
+
+```python
+# Python 等价：
+async with aiohttp.ClientSession() as session:
+    async with session.get(url) as response:
+        data = await response.text()
+# 离开 with 块时自动关闭
+```
+
+```rust
+// Rust 等价（通过 Drop trait）：
+{
+    let conn = Connection::new("postgres://localhost").await?;
+    let users = conn.query("SELECT * FROM users").await?;
+    // conn 离开作用域时自动 Drop
+}
+```
+
+> **注意**：`using` / `await using` 需要运行时支持 `Symbol.dispose` / `Symbol.asyncDispose`。
+> Node.js v22+、现代浏览器已支持，旧环境可能需要 polyfill。
+
+## 6.9 实用模式
 
 ```typescript
 // ——— 延迟函数 ———
@@ -340,7 +397,7 @@ async function mapWithConcurrency<T, R>(
 }
 ```
 
-## 6.9 练习
+## 6.10 练习
 
 ```typescript
 // 练习1：实现一个 fetchWithRetry 函数

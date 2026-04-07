@@ -197,7 +197,91 @@ if (result.ok) {
 }
 ```
 
-## 3.6 类型推断详解
+## 3.6 const 类型参数（TS 5.0+）
+
+`const` 类型参数让泛型函数自动推断出最窄的字面量类型，无需调用者手动写 `as const`。
+
+```typescript
+// ——— 没有 const 类型参数 ———
+function createRoute<T extends string>(path: T) {
+    return { path };
+}
+const r1 = createRoute("/users");  // T 推断为 string，不是 "/users"
+
+// ——— 使用 const 类型参数（TS 5.0+）———
+function createRouteConst<const T extends string>(path: T) {
+    return { path };
+}
+const r2 = createRouteConst("/users");  // T 推断为 "/users"（字面量类型）
+
+// ——— 实用场景：类型安全的配置对象 ———
+function defineConfig<const T extends Record<string, unknown>>(config: T): T {
+    return config;
+}
+
+const appConfig = defineConfig({
+    port: 3000,
+    host: "localhost",
+    features: ["auth", "logging"] as const,
+});
+// appConfig.port 的类型是 3000（不是 number）
+// appConfig.host 的类型是 "localhost"（不是 string）
+
+// ——— 对比：没有 const 时需要调用者手动 as const ———
+function defineRoutes<const T extends readonly string[]>(routes: T): T {
+    return routes;
+}
+const routes = defineRoutes(["/home", "/about", "/contact"]);
+// routes 的类型是 readonly ["/home", "/about", "/contact"]
+// 而不是 string[]
+```
+
+> **Rust 对比**：这类似 Rust 中泛型函数自动推断具体类型的行为。
+> Rust 天然会推断最具体的类型，而 TS 默认会拓宽，`const` 修饰符让 TS 行为更像 Rust。
+
+## 3.7 NoInfer<T> 工具类型（TS 5.4+）
+
+`NoInfer<T>` 阻止 TypeScript 从某个位置推断泛型参数，强制从其他位置推断。
+
+```typescript
+// ——— 问题：默认值影响了类型推断 ———
+function createFSM<S extends string>(config: {
+    initial: S;
+    states: S[];
+}) {
+    return config;
+}
+
+// TS 会从 initial 和 states 两个位置推断 S
+// 如果 initial 写错了，不会报错，因为 S 被拓宽了
+createFSM({
+    initial: "idle",
+    states: ["idle", "loading", "done"],
+});
+
+// ——— 解决：用 NoInfer 阻止从 initial 推断 ———
+function createFSMSafe<S extends string>(config: {
+    initial: NoInfer<S>;  // 不从这里推断 S
+    states: S[];           // 只从这里推断 S
+}) {
+    return config;
+}
+
+createFSMSafe({
+    initial: "idle",
+    states: ["idle", "loading", "done"],
+});  // OK
+
+// createFSMSafe({
+//     initial: "typo",  // 错误！"typo" 不在 states 中
+//     states: ["idle", "loading", "done"],
+// });
+```
+
+> **实用场景**：库作者常用 `NoInfer` 来确保类型参数从“正确的地方”推断，
+> 避免默认值或回调参数意外影响泛型推断。
+
+## 3.8 类型推断详解
 
 TS 编译器会尽可能推断类型，减少手动标注。
 
@@ -239,7 +323,7 @@ const directions = ["up", "down", "left", "right"] as const;
 type Direction = typeof directions[number];  // "up" | "down" | "left" | "right"
 ```
 
-## 3.7 类型守卫（Type Guards）
+## 3.9 类型守卫（Type Guards）
 
 类型守卫是运行时检查，告诉 TS 编译器在某个代码分支中变量的确切类型。类似 Rust 的 `match` + 模式匹配。
 
@@ -291,7 +375,7 @@ function move2(animal: Fish | Bird) {
 }
 ```
 
-## 3.8 常见模式：回调与高阶函数
+## 3.10 常见模式：回调与高阶函数
 
 JS/TS 中函数是一等公民，大量使用高阶函数（接收或返回函数的函数）。
 
@@ -325,7 +409,7 @@ fetchData("/api", (data) => {
 });
 ```
 
-## 3.9 练习
+## 3.11 练习
 
 ```typescript
 // 练习1：实现泛型函数 first<T>，返回数组的第一个元素

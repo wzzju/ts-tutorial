@@ -214,7 +214,58 @@ function area(shape: Shape): number {
 }
 ```
 
-## 2.7 类型断言（Type Assertion）
+## 2.7 satisfies 操作符（TS 4.9+）
+
+`satisfies` 是 TypeScript 4.9 引入的重要操作符，解决了一个常见痛点：既要验证值符合某个类型，又不想丢失字面量类型的精确信息。
+
+```typescript
+// ——— 问题：类型注解会拓宽类型 ———
+type Color = "red" | "green" | "blue";
+type RGB = [number, number, number];
+
+// 方式 1：类型注解 —— 丢失了字面量类型信息
+const palette1: Record<Color, string | RGB> = {
+    red: [255, 0, 0],
+    green: "#00ff00",
+    blue: [0, 0, 255],
+};
+palette1.red;    // 类型是 string | RGB，不知道具体是哪个
+// palette1.red.map(...)  // 错误！因为可能是 string
+
+// 方式 2：satisfies —— 既验证类型又保留精确信息
+const palette2 = {
+    red: [255, 0, 0],
+    green: "#00ff00",
+    blue: [0, 0, 255],
+} satisfies Record<Color, string | RGB>;
+
+palette2.red;    // 类型是 number[]（保留了实际类型）
+palette2.green;  // 类型是 string
+palette2.red.map(x => x / 255);  // OK！
+palette2.green.toUpperCase();     // OK！
+
+// ——— 常见用法：配置对象验证 ———
+interface AppConfig {
+    apiUrl: string;
+    timeout: number;
+    debug: boolean;
+}
+
+const config = {
+    apiUrl: "https://api.example.com",
+    timeout: 3000,
+    debug: false,
+} satisfies AppConfig;
+// config.apiUrl 的类型是 "https://api.example.com"（字面量），不是 string
+// 同时如果少写或拼错字段，编译器会报错
+```
+
+> **类比**：`satisfies` 类似 Rust 中的 trait bound 检查——确保值满足约束，但不改变其具体类型。
+> 简单记忆：
+> - `const x: T = ...` → 类型是 T（拓宽）
+> - `const x = ... satisfies T` → 类型是实际值的类型（精确），但保证符合 T
+
+## 2.8 类型断言（Type Assertion）
 
 ```typescript
 // 类似 C++ 的 static_cast，告诉编译器"我比你更了解这个类型"
@@ -235,7 +286,7 @@ let x = (someValue as unknown as TargetType);
 // 如果断言错误，运行时会崩溃，就像 C++ 的错误 static_cast
 ```
 
-## 2.8 概念对比总结
+## 2.9 概念对比总结
 
 | 概念 | C/C++ | Rust | Python | TypeScript |
 |------|-------|------|--------|------------|
@@ -247,7 +298,7 @@ let x = (someValue as unknown as TargetType);
 | 类型检查 | 编译期(名义) | 编译期(名义) | 运行期(鸭子) | 编译期(结构化) |
 | 类型擦除 | 不擦除 | 单态化 | 无类型信息 | **完全擦除** |
 
-## 2.9 练习
+## 2.10 练习
 
 ```typescript
 // 练习：定义以下类型并创建对应的变量

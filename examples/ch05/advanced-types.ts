@@ -198,6 +198,37 @@ const updated = updateConfig(defaultConfig, {
 });
 console.log(`updated config: ${JSON.stringify(updated, null, 2)}`);
 
+// ——— 5.7 satisfies 与类型操作的组合 ———
+console.log("\n--- satisfies + as const 组合 ---");
+
+interface RouteConfig {
+    path: string;
+    method: "GET" | "POST" | "PUT" | "DELETE";
+    auth: boolean;
+}
+
+const apiRoutes = {
+    getUsers: { path: "/users", method: "GET", auth: true },
+    createUser: { path: "/users", method: "POST", auth: true },
+    health: { path: "/health", method: "GET", auth: false },
+} as const satisfies Record<string, RouteConfig>;
+
+// 每个路由的 method 保留字面量类型（"GET"），不是宽泛的 string
+type RouteNames = keyof typeof apiRoutes;
+console.log(`Route names: ${(Object.keys(apiRoutes) as RouteNames[]).join(", ")}`);
+console.log(`getUsers.method = "${apiRoutes.getUsers.method}"`);
+
+// satisfies 验证事件处理器
+type EventHandlerMap = Record<string, (...args: any[]) => void>;
+
+const myHandlers = {
+    onClick: (x: number, y: number) => console.log(`  click at ${x},${y}`),
+    onKeydown: (key: string) => console.log(`  key: ${key}`),
+} satisfies EventHandlerMap;
+
+myHandlers.onClick(100, 200);
+myHandlers.onKeydown("Enter");
+
 // ——— 5.8 类型安全的事件系统 ———
 console.log("\n--- 类型安全的事件系统 ---");
 

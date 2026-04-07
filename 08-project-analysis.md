@@ -497,7 +497,148 @@ type TaskWithMeta = Task & {
 };
 ```
 
-## 8.5 阅读第三方库类型的技巧
+## 8.5 与现代前端框架结合
+
+### React + TypeScript
+
+React 是目前最流行的前端框架之一，与 TypeScript 结合使用非常普遍。
+
+```typescript
+// ——— React 组件的 TypeScript 类型化 ———
+
+// 函数组件的 Props 类型定义
+interface ButtonProps {
+    label: string;
+    variant?: "primary" | "secondary" | "danger";  // 可选，联合类型
+    disabled?: boolean;
+    onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+    children?: React.ReactNode;  // 子元素类型
+}
+
+// 函数组件（推荐写法）
+function Button({ label, variant = "primary", disabled, onClick, children }: ButtonProps) {
+    return (
+        <button className={`btn btn-${variant}`} disabled={disabled} onClick={onClick}>
+            {children ?? label}
+        </button>
+    );
+}
+
+// ——— 泛型组件 ———
+// 类似 Rust 的泛型结构体
+interface ListProps<T> {
+    items: T[];
+    renderItem: (item: T, index: number) => React.ReactNode;
+    keyExtractor: (item: T) => string;
+}
+
+function List<T>({ items, renderItem, keyExtractor }: ListProps<T>) {
+    return (
+        <ul>
+            {items.map((item, i) => (
+                <li key={keyExtractor(item)}>{renderItem(item, i)}</li>
+            ))}
+        </ul>
+    );
+}
+
+// 使用：TS 自动推断 T 为 User
+<List
+    items={users}
+    renderItem={(user) => <span>{user.name}</span>}
+    keyExtractor={(user) => user.id}
+/>
+
+// ——— Hooks 的类型化 ———
+import { useState, useEffect, useRef, useCallback } from "react";
+
+function useUserProfile(userId: string) {
+    // useState 泛型
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);  // 自动推断为 boolean
+
+    // useRef 泛型
+    const abortRef = useRef<AbortController | null>(null);
+
+    // useCallback 的参数类型自动推断
+    const fetchUser = useCallback(async () => {
+        abortRef.current?.abort();
+        abortRef.current = new AbortController();
+
+        setLoading(true);
+        try {
+            const response = await fetch(`/api/users/${userId}`, {
+                signal: abortRef.current.signal,
+            });
+            const data: User = await response.json();
+            setUser(data);
+        } finally {
+            setLoading(false);
+        }
+    }, [userId]);
+
+    useEffect(() => {
+        fetchUser();
+        return () => abortRef.current?.abort();
+    }, [fetchUser]);
+
+    return { user, loading } as const;
+    // as const 让返回类型更精确
+}
+```
+
+### Vue 3 + TypeScript
+
+Vue 3 的 Composition API 与 TypeScript 配合也非常好。
+
+```typescript
+// ——— Vue 3 组件的 TypeScript 类型化 ———
+<script setup lang="ts">
+import { ref, computed, watch } from "vue";
+
+// Props 类型定义
+interface Props {
+    title: string;
+    count?: number;
+    items: string[];
+}
+
+// defineProps 使用泛型
+const props = withDefaults(defineProps<Props>(), {
+    count: 0,
+});
+
+// Emits 类型定义
+const emit = defineEmits<{
+    (e: "update", value: number): void;
+    (e: "delete", id: string): void;
+}>();
+
+// ref 自动推断类型
+const searchQuery = ref("");           // Ref<string>
+const selectedItem = ref<string | null>(null);  // Ref<string | null>
+
+// computed 自动推断返回类型
+const filteredItems = computed(() =>
+    props.items.filter(item =>
+        item.toLowerCase().includes(searchQuery.value.toLowerCase())
+    )
+);
+
+// watch 的类型安全
+watch(() => props.count, (newVal, oldVal) => {
+    // newVal 和 oldVal 自动推断为 number | undefined
+    console.log(`count changed: ${oldVal} → ${newVal}`);
+});
+</script>
+```
+
+> **对 C++/Rust 程序员的提示**：
+> - React/Vue 的组件就像带类型参数的函数——Props 是输入类型，渲染结果是输出
+> - Hooks（React）/ Composables（Vue）类似 Rust 的 trait 方法——封装可复用的有状态逻辑
+> - 你不需要精通框架才能阅读 TS 代码——理解类型系统就能读懂大部分框架代码
+
+## 8.6 阅读第三方库类型的技巧
 
 ```typescript
 // 示例：阅读 axios 的类型定义
@@ -532,7 +673,7 @@ export interface AxiosResponse<T = any, D = any> {
 // 4. 看 export 了哪些类型——这是库的公共 API
 ```
 
-## 8.6 练习
+## 8.7 练习
 
 ```
 练习1：在 TaskStore 中添加排序功能

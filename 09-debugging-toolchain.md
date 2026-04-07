@@ -213,6 +213,60 @@ export default tseslint.config(
 > **注意**：ESLint 9+ 使用 Flat Config（`eslint.config.mjs`），不再支持 `.eslintrc`。
 > `typescript-eslint` v8 提供 `tseslint.config()` 辅助函数简化配置。
 
+### Biome（新一代工具链，推荐）
+
+Biome 是用 Rust 编写的新一代前端工具链，集成了 Linter + Formatter，速度极快。
+对于新项目，可以用 Biome 替代 ESLint + Prettier。
+
+```bash
+# 安装
+npm install -D @biomejs/biome
+
+# 初始化配置
+npx @biomejs/biome init
+```
+
+```jsonc
+// biome.json
+{
+    "$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
+    "organizeImports": {
+        "enabled": true
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "recommended": true,
+            "suspicious": {
+                "noExplicitAny": "warn"    // 警告使用 any
+            }
+        }
+    },
+    "formatter": {
+        "enabled": true,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 100
+    }
+}
+```
+
+```bash
+# 使用
+npx @biomejs/biome check src/          # 检查 + 格式化（只报告）
+npx @biomejs/biome check --write src/  # 检查 + 自动修复
+npx @biomejs/biome format src/         # 只格式化
+npx @biomejs/biome lint src/           # 只检查
+```
+
+> **Biome vs ESLint + Prettier**：
+> - Biome 用 Rust 编写，速度比 ESLint 快 10-100 倍
+> - 一个工具替代两个（Linter + Formatter），配置更简单
+> - 规则覆盖率已经很高，但某些 ESLint 插件生态还未完全覆盖
+> - 新项目推荐 Biome，旧项目可渐进迁移
+>
+> **类比**：Biome 之于 TS 就像 rustfmt + clippy 之于 Rust——官方风格的一站式工具。
+
 ### Prettier（代码格式化）
 
 ```bash
@@ -233,6 +287,7 @@ npm install -D prettier
 > **类比**：
 > - ESLint ≈ Clippy（Rust）/ pylint（Python）/ clang-tidy（C++）
 > - Prettier ≈ rustfmt（Rust）/ black（Python）/ clang-format（C++）
+> - Biome ≈ rustfmt + clippy 合二为一（Rust 编写，极快）
 
 ## 9.5 测试
 
@@ -299,7 +354,7 @@ npx vitest --coverage  # 带覆盖率
 日常开发流程：
 1. npm run dev          → 启动开发服务器（Vite 热更新）
 2. 编写代码              → VS Code 实时类型检查
-3. 保存                  → ESLint 检查 + Prettier 格式化（配置保存时自动执行）
+3. 保存                  → Biome/ESLint 检查 + Prettier/Biome 格式化
 4. 浏览器查看效果         → 自动刷新
 5. 遇到 bug             → Chrome DevTools 或 VS Code 断点调试
 6. 写测试               → npx vitest（监听模式自动运行）
@@ -309,9 +364,10 @@ npx vitest --coverage  # 带覆盖率
 常用 VS Code 设置（settings.json）：
 {
     "editor.formatOnSave": true,
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "biomejs.biome",  // 或 "esbenp.prettier-vscode"
     "editor.codeActionsOnSave": {
-        "source.fixAll.eslint": "explicit"
+        "source.fixAll.eslint": "explicit",       // 如果用 ESLint
+        "source.organizeImports.biome": "explicit" // 如果用 Biome
     },
     "typescript.preferences.importModuleSpecifier": "relative"
 }
@@ -328,7 +384,7 @@ npx vitest --coverage  # 带覆盖率
 
 练习2：搭建完整工具链
   - 用 Vite 创建一个 vanilla-ts 项目
-  - 配置 ESLint + Prettier
+  - 配置 Biome（或 ESLint + Prettier）
   - 配置 Vitest
   - 编写一个工具函数并测试
 

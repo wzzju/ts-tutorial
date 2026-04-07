@@ -126,6 +126,38 @@ let input: unknown = "hello";
 let len = (input as string).length;
 console.log(`"hello" as string → length = ${len}`);
 
+// ——— 2.8 satisfies 操作符（TS 4.9+）———
+console.log("\n--- satisfies 操作符 ---");
+
+type Color = "red" | "green" | "blue";
+type RGB = [number, number, number];
+
+// satisfies 验证类型但保留精确推断
+const palette = {
+    red: [255, 0, 0],
+    green: "#00ff00",
+    blue: [0, 0, 255],
+} satisfies Record<Color, string | RGB>;
+
+// palette.red 的类型是 number[]（精确），不是 string | RGB（宽泛）
+console.log(`palette.red = [${palette.red}]`);
+console.log(`palette.green = "${palette.green.toUpperCase()}"`);
+
+// satisfies + as const 组合
+interface AppConfig {
+    apiUrl: string;
+    timeout: number;
+    debug: boolean;
+}
+
+const appConfig = {
+    apiUrl: "https://api.example.com",
+    timeout: 3000,
+    debug: false,
+} satisfies AppConfig;
+// appConfig.apiUrl 的类型是 "https://api.example.com"（字面量）
+console.log(`config.apiUrl = "${appConfig.apiUrl}"`);
+
 console.log("\n=== Chapter 2 完成 ===");
 
 export {};

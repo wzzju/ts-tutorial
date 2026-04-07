@@ -303,7 +303,40 @@ type I = Parameters<(a: string, b: number) => void>;
 type J = Awaited<Promise<Promise<string>>>;  // string
 ```
 
-## 5.7 类型体操实战：解读复杂类型
+## 5.7 satisfies 与类型操作的组合
+
+`satisfies` 可以与其他类型操作组合使用，在复杂场景中非常强大。
+
+```typescript
+// ——— satisfies + as const：类型安全的常量配置 ———
+interface RouteConfig {
+    path: string;
+    method: "GET" | "POST" | "PUT" | "DELETE";
+    auth: boolean;
+}
+
+const routes = {
+    getUsers: { path: "/users", method: "GET", auth: true },
+    createUser: { path: "/users", method: "POST", auth: true },
+    health: { path: "/health", method: "GET", auth: false },
+} as const satisfies Record<string, RouteConfig>;
+// 每个路由的 method 保留字面量类型（"GET"），不是宽泛的 string
+// 同时保证每个对象符合 RouteConfig 结构
+
+type RouteNames = keyof typeof routes;  // "getUsers" | "createUser" | "health"
+
+// ——— satisfies + 映射类型：事件处理器注册 ———
+type EventHandlers = Record<string, (...args: any[]) => void>;
+
+const handlers = {
+    onClick: (x: number, y: number) => console.log(`click at ${x},${y}`),
+    onKeydown: (key: string) => console.log(`key: ${key}`),
+} satisfies EventHandlers;
+// handlers.onClick 的类型是 (x: number, y: number) => void（精确）
+// 而不是 (...args: unknown[]) => void（宽泛）
+```
+
+## 5.8 类型体操实战：解读复杂类型
 
 在真实项目中，你会遇到复杂的类型定义。以下是逐步解读的方法：
 
@@ -372,7 +405,7 @@ emitter.on("click", (payload) => {
 // emitter.emit("click", { key: "a" });  // 错误！payload 不匹配
 ```
 
-## 5.8 类型对比总表
+## 5.9 类型对比总表
 
 | Rust 概念 | TypeScript 等价 | 示例 |
 |-----------|----------------|------|
@@ -385,7 +418,7 @@ emitter.on("click", (payload) => {
 | `type Alias = ...` | `type Alias = ...` | 几乎相同 |
 | `PhantomData<T>` | 无需（类型擦除） | — |
 
-## 5.9 练习
+## 5.10 练习
 
 ```typescript
 // 练习1：定义一个 DeepReadonly<T> 类型

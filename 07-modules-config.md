@@ -122,9 +122,9 @@ Node.js ESM     ✗         ✓        ✓ (v22.6+)
 {
     "compilerOptions": {
         // ——— 输出目标 ———
-        "target": "ES2022",        // 编译目标 JS 版本
+        "target": "ES2023",        // 编译目标 JS 版本（推荐 ES2022 或 ES2023）
         "module": "ESNext",         // 模块系统格式
-        "moduleResolution": "bundler", // 模块解析策略
+        "moduleResolution": "bundler", // 模块解析策略（前端项目推荐）
         "outDir": "./dist",         // 输出目录
         "rootDir": "./src",         // 源码根目录
 
@@ -140,11 +140,13 @@ Node.js ESM     ✗         ✓        ✓ (v22.6+)
         "noUncheckedIndexedAccess": true,  // 索引访问返回 T | undefined
         "noUnusedLocals": true,            // 未使用的局部变量报错
         "noUnusedParameters": true,        // 未使用的参数报错
+        "erasableSyntaxOnly": false,       // TS 5.8+：是否只允许可擦除语法
 
         // ——— 互操作 ———
         "esModuleInterop": true,    // 允许 import x from "commonjs-module"
         "allowSyntheticDefaultImports": true,
         "resolveJsonModule": true,  // 允许 import json 文件
+        "verbatimModuleSyntax": true, // TS 5.0+：严格模块语法（替代 importsNotUsedAsValues）
 
         // ——— 声明文件 ———
         "declaration": true,        // 生成 .d.ts 声明文件
@@ -159,7 +161,7 @@ Node.js ESM     ✗         ✓        ✓ (v22.6+)
         },
 
         // ——— 库 ———
-        "lib": ["ES2022", "DOM", "DOM.Iterable"]  // 可用的全局类型
+        "lib": ["ES2023", "DOM", "DOM.Iterable"]  // 可用的全局类型
         // "DOM" 提供浏览器 API 类型（document, window 等）
         // 不加 "DOM" 则只有 Node.js 环境
     },
@@ -170,16 +172,35 @@ Node.js ESM     ✗         ✓        ✓ (v22.6+)
 }
 ```
 
+### TS 5.x 新增配置选项
+
+```jsonc
+{
+    "compilerOptions": {
+        // verbatimModuleSyntax (TS 5.0+)
+        // 替代旧的 importsNotUsedAsValues 和 preserveValueImports
+        // 强制使用 import type 导入纯类型，避免运行时副作用
+        "verbatimModuleSyntax": true,
+
+        // erasableSyntaxOnly (TS 5.8+)
+        // 只允许可擦除的 TS 语法（类型注解、接口等）
+        // 禁止 enum、参数属性、namespace 等需要代码生成的语法
+        // 适用于配合 Node.js --experimental-strip-types 使用
+        "erasableSyntaxOnly": false,  // 默认 false，按需开启
+    }
+}
+```
+
 ### 常见配置场景
 
 ```jsonc
 // 纯 Node.js 项目
 {
     "compilerOptions": {
-        "target": "ES2022",
+        "target": "ES2023",
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
-        "lib": ["ES2022"],           // 不包含 DOM
+        "lib": ["ES2023"],           // 不包含 DOM
         "outDir": "./dist"
     }
 }
@@ -187,12 +208,24 @@ Node.js ESM     ✗         ✓        ✓ (v22.6+)
 // 浏览器前端项目（配合 Vite/Webpack）
 {
     "compilerOptions": {
-        "target": "ES2022",
+        "target": "ES2023",
         "module": "ESNext",
         "moduleResolution": "bundler",
-        "lib": ["ES2022", "DOM", "DOM.Iterable"],
+        "lib": ["ES2023", "DOM", "DOM.Iterable"],
         "jsx": "react-jsx",          // React JSX 支持
         "noEmit": true                // 不输出 JS（交给 Vite/Webpack）
+    }
+}
+
+// 配合 Node.js --experimental-strip-types 的项目
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "erasableSyntaxOnly": true,   // 只允许可擦除语法
+        "verbatimModuleSyntax": true,
+        "noEmit": true
     }
 }
 ```
@@ -311,11 +344,11 @@ npm run dev          # 运行开发服务器
         "test": "vitest"
     },
     "dependencies": {
-        "axios": "^1.6.0"         // 运行时需要
+        "axios": "^1.7.0"         // 运行时需要
     },
     "devDependencies": {
-        "typescript": "^5.4.0",   // 只在开发时需要
-        "@types/node": "^20.0.0"
+        "typescript": "^5.8.0",   // 只在开发时需要
+        "@types/node": "^22.0.0"
     }
 }
 ```

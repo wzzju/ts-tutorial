@@ -222,6 +222,36 @@ NonNullable<T>      // 排除 null/undefined
 ReturnType<T>       // 函数返回类型
 Parameters<T>       // 函数参数元组
 Awaited<T>          // 解包 Promise
+NoInfer<T>          // 阻止从此位置推断泛型（TS 5.4+）
+```
+
+### satisfies 操作符
+
+```typescript
+// 验证类型但保留精确推断
+const config = {
+    port: 3000,
+    host: "localhost",
+} satisfies Record<string, string | number>;
+// config.port 的类型是 number（不是 string | number）
+
+// satisfies + as const：最常见组合
+const routes = {
+    home: "/",
+    about: "/about",
+} as const satisfies Record<string, string>;
+```
+
+### 资源管理（using）
+
+```typescript
+// 同步资源释放（类似 C++ RAII / Rust Drop）
+using file = new FileHandle("/tmp/data");
+// 作用域结束时自动调用 file[Symbol.dispose]()
+
+// 异步资源释放（类似 Python async with）
+await using conn = await createConnection();
+// 作用域结束时自动 await conn[Symbol.asyncDispose]()
 ```
 
 ### 异步
@@ -277,8 +307,8 @@ import type { User } from "./types";
 | 模式匹配 | `switch` | `match` | `match`(3.10+) | `switch` + 类型缩窄 |
 | 包管理 | conan/vcpkg | cargo | pip | npm/yarn/pnpm |
 | 构建系统 | cmake/make | cargo build | setuptools | tsc/vite/webpack |
-| 代码检查 | clang-tidy | clippy | pylint/ruff | eslint |
-| 格式化 | clang-format | rustfmt | black/ruff | prettier |
+| 代码检查 | clang-tidy | clippy | pylint/ruff | eslint/biome |
+| 格式化 | clang-format | rustfmt | black/ruff | prettier/biome |
 
 ## 10.4 TypeScript 编译器错误码速查
 
@@ -295,6 +325,7 @@ import type { User } from "./types";
 | TS7006 | 隐式 any 类型 | 参数缺少类型注解 |
 | TS7053 | 隐式 any 索引 | 动态键访问需要类型断言 |
 | TS18046 | unknown 类型 | 使用前需要类型检查 |
+| TS1270 | 不可擦除语法 | 开启 erasableSyntaxOnly 后使用了 enum/namespace |
 
 ## 10.5 常见模式 Cheat Sheet
 
@@ -372,4 +403,6 @@ value as unknown as Target               // 双重断言（最后手段）
 建议的后续学习路径：
 - 官方 Handbook: https://www.typescriptlang.org/docs/handbook/
 - Type Challenges: https://github.com/type-challenges/type-challenges
+- TypeScript 演进博客: https://devblogs.microsoft.com/typescript/
 - 实际参与一个开源 TS 项目，从修复小 issue 开始
+- 尝试用 TypeScript 构建一个完整的全栈项目（如 Next.js / Nuxt 应用）
